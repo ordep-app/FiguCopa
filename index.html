@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FiguCopa 2026 ⚽</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #08111f;
@@ -31,6 +31,26 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── LOGIN ── */
+.login-screen { position:fixed; inset:0; z-index:9998; background:linear-gradient(160deg,#050d1a,#08111f); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .4s; }
+.login-screen.hide { opacity:0; pointer-events:none; }
+.login-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,8vw,2.8rem); letter-spacing:4px; color:var(--gold); text-align:center; margin-bottom:6px; }
+.login-sub { font-size:0.83rem; color:var(--muted); text-align:center; margin-bottom:32px; letter-spacing:1px; }
+.login-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:300px; padding:14px 20px; border-radius:50px; border:none; background:#fff; color:#1a1a1a; font-family:'Barlow',sans-serif; font-size:0.95rem; font-weight:800; cursor:pointer; box-shadow:0 4px 24px rgba(0,0,0,0.4); transition:transform .15s; }
+.login-btn:hover { transform:translateY(-2px); }
+.login-btn img { width:22px; height:22px; }
+.login-spinner { width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--gold);border-radius:50%;animation:spin 0.85s linear infinite;margin-top:20px;display:none; }
+.login-spinner.show { display:block; }
+.login-footer { margin-top:20px; font-size:0.72rem; color:var(--muted); text-align:center; line-height:1.7; max-width:280px; }
+
+/* ── USER BAR ── */
+.user-bar { display:flex; align-items:center; justify-content:space-between; padding:6px 14px; background:var(--bg2); border-bottom:1px solid var(--border); }
+.user-info { display:flex; align-items:center; gap:8px; }
+.user-avatar { width:24px; height:24px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; }
+.user-name { font-size:0.78rem; font-weight:700; color:var(--text); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.user-logout { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); border-radius:50px; padding:3px 10px; font-family:'Barlow',sans-serif; font-size:0.7rem; font-weight:700; cursor:pointer; transition:all .15s; }
+.user-logout:hover { background:rgba(229,57,53,0.15); border-color:#e53935; color:#e57373; }
 
 /* ── LOGIN ── */
 .login-screen { position:fixed; inset:0; z-index:9998; background:linear-gradient(160deg,#050d1a,#08111f); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .5s; }
@@ -141,7 +161,9 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 .fig.repetida .fig-status { background:rgba(255,145,0,0.22); color:var(--orange); }
 .fig.falta .fig-status { background:rgba(255,255,255,0.04); color:var(--falta-text); }
 .fig-r-badge { position:absolute; top:3px; right:3px; background:var(--orange); color:#000; width:14px; height:14px; border-radius:50%; font-size:0.5rem; font-weight:900; display:flex; align-items:center; justify-content:center; }
-.vazio { padding:14px; color:var(--muted); font-size:0.82rem; text-align:center; }
+.expand-bar { display:flex; justify-content:center; gap:8px; padding:4px 16px 10px; }
+.expand-btn { background:var(--card2); border:1.5px solid var(--border); color:var(--muted); border-radius:50px; padding:5px 16px; font-family:'Barlow',sans-serif; font-size:0.78rem; font-weight:700; cursor:pointer; transition:all .15s; }
+.expand-btn:hover { border-color:var(--gold); color:var(--gold); }
 
 /* BOTÕES MARCA/DESMARCA */
 .secao-actions { display:flex; gap:5px; margin-left:6px; }
@@ -370,14 +392,14 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 
 <!-- LOGIN SCREEN -->
 <div class="login-screen" id="login-screen">
-  <img class="login-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚽%3C/text%3E%3C/svg%3E" alt="FiguCopa">
-  <div class="login-title">FIGUCOPA 2026</div>
+  <div class="login-title">⚽ FIGUCOPA 2026</div>
   <div class="login-sub">SEU ÁLBUM DIGITAL DA COPA</div>
-  <button class="login-btn" onclick="loginGoogle()">
+  <button class="login-btn" id="login-btn" onclick="loginGoogle()">
     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
     Entrar com Google
   </button>
-  <div class="login-footer">Seu progresso fica salvo na nuvem e acessível em qualquer dispositivo 🌐</div>
+  <div class="login-spinner" id="login-spinner"></div>
+  <div class="login-footer">Seu progresso fica salvo e acessível em qualquer dispositivo 🌐</div>
 </div>
 
 <!-- USER BAR -->
@@ -385,7 +407,6 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
   <div class="user-info">
     <img class="user-avatar" id="user-avatar" src="" alt="">
     <span class="user-name" id="user-name"></span>
-    <div class="sync-dot" id="sync-dot" title="Sincronizado"></div>
   </div>
   <button class="user-logout" onclick="logout()">Sair</button>
 </div>
@@ -414,6 +435,11 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 
 <div class="dica">Clique na figurinha para alternar: <b>Falta → Tenho</b></div>
 
+<div class="expand-bar">
+  <button class="expand-btn" onclick="expandirTodos()">⬇ Expandir tudo</button>
+  <button class="expand-btn" onclick="recolherTodos()">⬆ Recolher tudo</button>
+</div>
+
 <!-- MODAL LISTA FALTAS -->
 <div class="lista-overlay" id="lista-overlay" onclick="fecharListaFora(event)">
   <div class="lista-modal">
@@ -437,7 +463,6 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 <!-- BARRA DE BOTÕES -->
 <div class="bottom-bar">
   <button class="btn-bar b-lista"  onclick="abrirLista()">❌ Faltas</button>
-  <button class="btn-bar b-salvar" onclick="exportarBackup()">💾 Salvar</button>
   <button class="btn-bar b-rep"    onclick="abrirRepetidas()">🔁 Repetidas</button>
   <button class="btn-bar b-comp"   onclick="abrirComparador()">🔄 Comparar</button>
   <button class="btn-bar b-rank"   onclick="abrirRanking()">🏅 Ranking</button>
@@ -574,95 +599,7 @@ const GRUPOS = [
 let estado={}, filtro='todos', busca='';
 
 function norm(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-// ── FIREBASE ──
-const firebaseConfig = {
-  apiKey: "AIzaSyBH7gM6LhnDtkTkqeKR2Lr_fLIOcN76qDM",
-  authDomain: "figucopa-2428e.firebaseapp.com",
-  projectId: "figucopa-2428e",
-  storageBucket: "figucopa-2428e.firebasestorage.app",
-  messagingSenderId: "714651613044",
-  appId: "1:714651613044:web:2eb71875164a03b8ffde21"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-let currentUser = null;
-let saveTimeout = null;
-
-// LOGIN
-function loginGoogle(){
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(err=>{
-    showToast('❌ Erro ao entrar: ' + err.message);
-  });
-}
-function logout(){
-  if(!confirm('Sair da conta?')) return;
-  auth.signOut();
-}
-
-// AUTH STATE
-auth.onAuthStateChanged(async user=>{
-  if(user){
-    currentUser = user;
-    // mostrar user bar
-    document.getElementById('login-screen').classList.add('hide');
-    document.getElementById('user-bar').style.display='flex';
-    document.getElementById('user-name').textContent = user.displayName || user.email;
-    const av = document.getElementById('user-avatar');
-    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-    else { av.style.display='none'; }
-    // carregar progresso do Firestore
-    await loadFromFirestore();
-    renderAll();
-  } else {
-    currentUser = null;
-    document.getElementById('login-screen').classList.remove('hide');
-    document.getElementById('user-bar').style.display='none';
-    estado = {};
-  }
-});
-
-// LOAD do Firestore
-async function loadFromFirestore(){
-  try {
-    const doc = await db.collection('albuns').doc(currentUser.uid).get();
-    if(doc.exists && doc.data().progresso){
-      estado = doc.data().progresso;
-    } else {
-      // tentar migrar do localStorage
-      try { const ls=localStorage.getItem('copa26v3'); if(ls){ estado=JSON.parse(ls); await saveToFirestore(); } } catch(e){}
-    }
-  } catch(e){ 
-    // fallback para localStorage
-    try { const ls=localStorage.getItem('copa26v3'); if(ls) estado=JSON.parse(ls); } catch(e2){}
-  }
-}
-
-// SAVE no Firestore (debounce 1.5s)
-function saveS(){
-  // salvar local imediato
-  try { localStorage.setItem('copa26v3', JSON.stringify(estado)); } catch(e){}
-  // salvar Firestore com debounce
-  if(!currentUser) return;
-  const dot = document.getElementById('sync-dot');
-  if(dot){ dot.classList.add('syncing'); dot.title='Salvando...'; }
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(saveToFirestore, 1500);
-}
-
-async function saveToFirestore(){
-  if(!currentUser) return;
-  const dot = document.getElementById('sync-dot');
-  try {
-    await db.collection('albuns').doc(currentUser.uid).set({ progresso: estado, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    if(dot){ dot.classList.remove('syncing','error'); dot.title='Sincronizado ✅'; }
-  } catch(e){
-    if(dot){ dot.classList.remove('syncing'); dot.classList.add('error'); dot.title='Erro ao salvar ❌'; }
-  }
-}
-
-function loadS(){ /* auth state cuida do load */ }
+// ── SISTEMA DE SAVE ROBUSTO ──
 function getS(k){ return estado[k]||'falta'; }
 function ciclar(k){ const o=['falta','tenho']; estado[k]=o[(o.indexOf(getS(k))+1)%2]; saveS(); renderAll(); }
 function ciclarRep(k){ const o=['falta','repetida']; estado[k]=o[(o.indexOf(getS(k))+1)%2]; saveS(); renderAll(); }
@@ -837,6 +774,9 @@ function atualizarStats(){
   document.getElementById('prog-fill').style.width=pct+'%';
   document.getElementById('prog-label').textContent=`${t+r} de ${total} figurinhas`;
 }
+
+function expandirTodos(){ document.querySelectorAll('.secao').forEach(s=>s.classList.remove('collapsed')); }
+function recolherTodos(){ document.querySelectorAll('.secao').forEach(s=>s.classList.add('collapsed')); }
 
 function renderAll(){ renderContent(); renderSidebar(); atualizarStats(); }
 function setFiltro(f,btn){ filtro=f; document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderAll(); }
@@ -1020,16 +960,28 @@ function renderLista(){
   body.innerHTML='';
   let totalFalta=0;
 
-  // Abertura
-  const abFalta=[];
-  const abKeys=[{k:'ABT-00',lbl:'00 (Capa)'},...Array.from({length:19},(_,i)=>({k:`ABT-FWC${i+1}`,lbl:`FWC ${i+1}`}))];
-  abKeys.forEach(({k,lbl})=>{ if(getS(k)==='falta') abFalta.push(lbl); });
-  if(abFalta.length>0){
-    totalFalta+=abFalta.length;
+  // Especiais (FWC 00 + FWC 1-9)
+  const espFalta=[];
+  if(getS('FWC-00')==='falta') espFalta.push({lbl:'00',k:'FWC-00'});
+  for(let i=1;i<=9;i++){ if(getS(`FWC-${i}`)==='falta') espFalta.push({lbl:`FWC ${i}`,k:`FWC-${i}`}); }
+  if(espFalta.length>0){
+    totalFalta+=espFalta.length;
     const bloco=document.createElement('div'); bloco.className='lista-sel-bloco';
-    bloco.innerHTML=`<div class="lista-sel-nome"><span>🏆</span> Abertura</div>`;
+    bloco.innerHTML=`<div class="lista-sel-nome"><span>⭐</span> Especiais</div>`;
     const nums=document.createElement('div'); nums.className='lista-nums';
-    abFalta.forEach(l=>{ const p=document.createElement('span'); p.className='lista-num-pill especial'; p.textContent=l; nums.appendChild(p); });
+    espFalta.forEach(({lbl})=>{ const p=document.createElement('span'); p.className='lista-num-pill especial'; p.textContent=lbl; nums.appendChild(p); });
+    bloco.appendChild(nums); body.appendChild(bloco);
+  }
+
+  // Seleções Especiais (FWC 10-19)
+  const seFalta=[];
+  for(let i=10;i<=19;i++){ if(getS(`SE-${i}`)==='falta') seFalta.push(`FWC ${i}`); }
+  if(seFalta.length>0){
+    totalFalta+=seFalta.length;
+    const bloco=document.createElement('div'); bloco.className='lista-sel-bloco';
+    bloco.innerHTML=`<div class="lista-sel-nome"><span>🌍</span> Seleções Especiais</div>`;
+    const nums=document.createElement('div'); nums.className='lista-nums';
+    seFalta.forEach(l=>{ const p=document.createElement('span'); p.className='lista-num-pill especial'; p.textContent=l; nums.appendChild(p); });
     bloco.appendChild(nums); body.appendChild(bloco);
   }
 
@@ -1077,11 +1029,16 @@ function copiarLista(){
   let txt='❌ FIGURINHAS QUE FALTAM\n\n';
   let total=0;
 
-  // Abertura
-  const abFalta=[];
-  const abKeys=[{k:'ABT-00',lbl:'00'},...Array.from({length:19},(_,i)=>({k:`ABT-FWC${i+1}`,lbl:`FWC ${i+1}`}))];
-  abKeys.forEach(({k,lbl})=>{ if(getS(k)==='falta') abFalta.push(lbl); });
-  if(abFalta.length>0){ txt+=`🏆 ABERTURA\n${abFalta.join(', ')}\n\n`; total+=abFalta.length; }
+  // Especiais
+  const espFaltaC=[];
+  if(getS('FWC-00')==='falta') espFaltaC.push('00');
+  for(let i=1;i<=9;i++){ if(getS(`FWC-${i}`)==='falta') espFaltaC.push(`FWC ${i}`); }
+  if(espFaltaC.length>0){ txt+=`⭐ ESPECIAIS\n${espFaltaC.join(', ')}\n\n`; total+=espFaltaC.length; }
+
+  // Seleções Especiais
+  const seFaltaC=[];
+  for(let i=10;i<=19;i++){ if(getS(`SE-${i}`)==='falta') seFaltaC.push(`FWC ${i}`); }
+  if(seFaltaC.length>0){ txt+=`🌍 SELEÇÕES ESPECIAIS\n${seFaltaC.join(', ')}\n\n`; total+=seFaltaC.length; }
 
   GRUPOS.forEach(g=>{
     g.times.forEach(t=>{
@@ -1130,11 +1087,16 @@ function gerarTextRepetidas(){
   let txt = '🔁 MINHAS FIGURINHAS REPETIDAS\n\n';
   let total = 0;
 
-  // Abertura
-  const abRep = [];
-  const abKeys = [{k:'ABT-00',lbl:'00'},...Array.from({length:19},(_,i)=>({k:`ABT-FWC${i+1}`,lbl:`FWC ${i+1}`}))];
-  abKeys.forEach(({k,lbl})=>{ if(getS(k)==='repetida') abRep.push(lbl); });
-  if(abRep.length>0){ total+=abRep.length; txt+=`🏆 Abertura\n${abRep.join(', ')}\n\n`; }
+  // Especiais (FWC 00 + FWC 1-9)
+  const espRep = [];
+  if(getS('FWC-00')==='repetida') espRep.push('00');
+  for(let i=1;i<=9;i++){ if(getS(`FWC-${i}`)==='repetida') espRep.push(`FWC ${i}`); }
+  if(espRep.length>0){ total+=espRep.length; txt+=`⭐ Especiais\n${espRep.join(', ')}\n\n`; }
+
+  // Seleções Especiais (FWC 10-19)
+  const seRep = [];
+  for(let i=10;i<=19;i++){ if(getS(`SE-${i}`)==='repetida') seRep.push(`FWC ${i}`); }
+  if(seRep.length>0){ total+=seRep.length; txt+=`🌍 Seleções Especiais\n${seRep.join(', ')}\n\n`; }
 
   // Seleções
   GRUPOS.forEach(g=>{
@@ -1355,38 +1317,15 @@ function copiarResultado(euDou, euRecebo, totalDou, totalRecebo){
 }
 
 // ── BACKUP & SAVE ──
-function abrirBackup(){
-  // preencher info
-  let t=0,r=0,f=0; const total=980;
-  ['ABT-00',...Array.from({length:19},(_,i)=>`ABT-FWC${i+1}`)].forEach(k=>{const s=getS(k);if(s==='tenho')t++;else if(s==='repetida')r++;else f++;});
-  GRUPOS.forEach(g=>g.times.forEach(tm=>{for(let n=1;n<=20;n++){const s=getS(`SEL-${tm.nome}-${n}`);if(s==='tenho')t++;else if(s==='repetida')r++;else f++;}}));
-  const salvo=localStorage.getItem('copa26v3') ? '✅ Sim' : '❌ Não';
-  const agora=new Date().toLocaleString('pt-BR');
-  document.getElementById('backup-info-box').innerHTML=`
-    <div class="backup-info-row"><span class="backup-info-label">Tenho</span><span class="backup-info-val green">${t} figurinhas</span></div>
-    <div class="backup-info-row"><span class="backup-info-label">Repetidas</span><span class="backup-info-val orange">${r} figurinhas</span></div>
-    <div class="backup-info-row"><span class="backup-info-label">Faltam</span><span class="backup-info-val">${total-t-r} figurinhas</span></div>
-    <div class="backup-info-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px"><span class="backup-info-label">Salvo no navegador</span><span class="backup-info-val">${salvo}</span></div>
-    <div class="backup-info-row"><span class="backup-info-label">Última consulta</span><span class="backup-info-val" style="font-size:0.78rem">${agora}</span></div>
-  `;
-  document.getElementById('backup-overlay').classList.add('open');
-}
-function fecharBackup(){ document.getElementById('backup-overlay').classList.remove('open'); }
-function fecharBackupFora(e){ if(e.target===document.getElementById('backup-overlay')) fecharBackup(); }
-
 function exportarBackup(){
-  const data = {
-    versao: '1.0',
-    data: new Date().toISOString(),
-    progresso: estado
-  };
+  const data = { versao:'1.0', data:new Date().toISOString(), progresso:estado };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   const dataStr=new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
-  a.href=url; a.download=`album-copa2026-backup-${dataStr}.json`;
+  a.href=url; a.download=`figucopa-backup-${dataStr}.json`;
   a.click(); URL.revokeObjectURL(url);
-  showToast('✅ Backup exportado com sucesso!');
+  showToast('✅ Backup salvo com sucesso!');
 }
 
 function importarBackup(event){
@@ -1396,24 +1335,22 @@ function importarBackup(event){
   reader.onload=(e)=>{
     try{
       const data=JSON.parse(e.target.result);
-      if(!data.progresso) throw new Error('Arquivo inválido');
+      if(!data.progresso) throw new Error('inválido');
       if(!confirm(`Importar backup de ${new Date(data.data).toLocaleDateString('pt-BR')}?\n\nIsso vai substituir seu progresso atual.`)) return;
       estado=data.progresso;
-      saveS(); renderAll(); fecharBackup();
-      showToast('✅ Backup importado com sucesso!');
-    }catch(err){
-      showToast('❌ Arquivo inválido ou corrompido');
-    }
+      saveS(); renderAll();
+      showToast('✅ Backup importado!');
+    }catch(err){ showToast('❌ Arquivo inválido'); }
   };
   reader.readAsText(file);
   event.target.value='';
 }
 
 function resetarTudo(){
-  if(!confirm('⚠️ Tem certeza?\n\nIsso vai apagar TODO o seu progresso e não pode ser desfeito!')) return;
+  if(!confirm('⚠️ Apagar TODO o progresso? Isso não pode ser desfeito!')) return;
   if(!confirm('Última chance! Apagar tudo mesmo?')) return;
   estado={};
-  saveS(); renderAll(); fecharBackup();
+  saveS(); renderAll();
   showToast('🗑 Progresso apagado');
 }
 
@@ -1424,6 +1361,44 @@ function showToast(msg){
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 
+// ── SISTEMA DE SAVE ROBUSTO ──
+const SAVE_KEY = 'figucopa2026_v4';
+const SAVE_KEY_BKP = 'figucopa2026_v4_bkp';
+
+function loadS(){
+  try {
+    // tenta chave nova
+    let s = localStorage.getItem(SAVE_KEY);
+    // fallback para chave antiga
+    if(!s) s = localStorage.getItem('copa26v3');
+    if(s){ estado = JSON.parse(s); }
+  } catch(e){ estado = {}; }
+}
+
+function saveS(){
+  try {
+    const json = JSON.stringify(estado);
+    // salva em duas chaves diferentes como segurança
+    localStorage.setItem(SAVE_KEY, json);
+    localStorage.setItem(SAVE_KEY_BKP, json);
+    // salva também com timestamp
+    localStorage.setItem(SAVE_KEY + '_ts', new Date().toISOString());
+  } catch(e){
+    // se localStorage cheio, tenta limpar chaves antigas
+    try {
+      localStorage.removeItem('copa26v3');
+      localStorage.setItem(SAVE_KEY, JSON.stringify(estado));
+    } catch(e2){}
+  }
+}
+
+// Salva ao fechar/sair da página
+window.addEventListener('beforeunload', ()=>{ saveS(); });
+// Salva quando muda de aba
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveS(); });
+// Salva a cada 30 segundos automaticamente
+setInterval(saveS, 30000);
+
 // SPLASH DISMISS
 window.addEventListener('load', () => {
   setTimeout(() => {
@@ -1431,8 +1406,9 @@ window.addEventListener('load', () => {
   }, 2400);
 });
 
-// init — auth state vai chamar renderAll após login
+// INIT
 loadS();
+renderAll();
 </script>
 </body>
 </html>
