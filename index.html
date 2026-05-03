@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meu Álbum Copa 2026 ⚽</title>
+<title>FiguCopa 2026 ⚽</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #08111f;
@@ -28,6 +31,28 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── LOGIN ── */
+.login-screen { position:fixed; inset:0; z-index:9998; background:linear-gradient(160deg,#050d1a,#08111f); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .5s; }
+.login-screen.hide { opacity:0; pointer-events:none; }
+.login-logo { width:min(200px,55vw); margin-bottom:24px; border-radius:16px; }
+.login-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,8vw,2.8rem); letter-spacing:4px; color:var(--gold); text-align:center; margin-bottom:6px; }
+.login-sub { font-size:0.83rem; color:var(--muted); text-align:center; margin-bottom:36px; letter-spacing:1px; }
+.login-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:300px; padding:14px 20px; border-radius:50px; border:none; background:#fff; color:#1a1a1a; font-family:'Barlow',sans-serif; font-size:0.95rem; font-weight:800; cursor:pointer; box-shadow:0 4px 24px rgba(0,0,0,0.4); transition:transform .15s,box-shadow .15s; }
+.login-btn:hover { transform:translateY(-2px); box-shadow:0 6px 30px rgba(0,0,0,0.5); }
+.login-btn img { width:22px; height:22px; }
+.login-footer { margin-top:24px; font-size:0.72rem; color:var(--muted); text-align:center; line-height:1.7; max-width:280px; }
+
+/* ── USER BAR ── */
+.user-bar { display:flex; align-items:center; justify-content:space-between; padding:7px 14px; background:var(--bg2); border-bottom:1px solid var(--border); }
+.user-info { display:flex; align-items:center; gap:8px; }
+.user-avatar { width:26px; height:26px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; }
+.user-name { font-size:0.8rem; font-weight:700; color:var(--text); }
+.user-logout { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); border-radius:50px; padding:4px 12px; font-family:'Barlow',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all .15s; }
+.user-logout:hover { background:rgba(229,57,53,0.15); border-color:#e53935; color:#e57373; }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--tenho); animation:pulse-dot 2s ease-in-out infinite; }
+.sync-dot.syncing { background:var(--orange); }
+.sync-dot.error { background:var(--red); animation:none; }
 
 .header {
   background: linear-gradient(160deg, #0d2347 0%, #0a1a35 40%, #071428 100%);
@@ -343,6 +368,28 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 
 </div>
 
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="login-screen">
+  <img class="login-logo" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚽%3C/text%3E%3C/svg%3E" alt="FiguCopa">
+  <div class="login-title">FIGUCOPA 2026</div>
+  <div class="login-sub">SEU ÁLBUM DIGITAL DA COPA</div>
+  <button class="login-btn" onclick="loginGoogle()">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    Entrar com Google
+  </button>
+  <div class="login-footer">Seu progresso fica salvo na nuvem e acessível em qualquer dispositivo 🌐</div>
+</div>
+
+<!-- USER BAR -->
+<div class="user-bar" id="user-bar" style="display:none">
+  <div class="user-info">
+    <img class="user-avatar" id="user-avatar" src="" alt="">
+    <span class="user-name" id="user-name"></span>
+    <div class="sync-dot" id="sync-dot" title="Sincronizado"></div>
+  </div>
+  <button class="user-logout" onclick="logout()">Sair</button>
+</div>
+
 <div class="stats-bar">
   <div class="stat s-total"><span class="sdot" style="background:rgba(255,255,255,0.3)"></span><span id="st-total">980</span> figurinhas</div>
   <div class="stat s-tenho"><span class="sdot" style="background:var(--tenho)"></span><span id="st-tenho">0</span> tenho</div>
@@ -527,8 +574,95 @@ const GRUPOS = [
 let estado={}, filtro='todos', busca='';
 
 function norm(s){ return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function loadS(){ try{const s=localStorage.getItem('copa26v3');if(s)estado=JSON.parse(s);}catch(e){} }
-function saveS(){ try{localStorage.setItem('copa26v3',JSON.stringify(estado));}catch(e){} }
+// ── FIREBASE ──
+const firebaseConfig = {
+  apiKey: "AIzaSyBH7gM6LhnDtkTkqeKR2Lr_fLIOcN76qDM",
+  authDomain: "figucopa-2428e.firebaseapp.com",
+  projectId: "figucopa-2428e",
+  storageBucket: "figucopa-2428e.firebasestorage.app",
+  messagingSenderId: "714651613044",
+  appId: "1:714651613044:web:2eb71875164a03b8ffde21"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+let currentUser = null;
+let saveTimeout = null;
+
+// LOGIN
+function loginGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(err=>{
+    showToast('❌ Erro ao entrar: ' + err.message);
+  });
+}
+function logout(){
+  if(!confirm('Sair da conta?')) return;
+  auth.signOut();
+}
+
+// AUTH STATE
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    currentUser = user;
+    // mostrar user bar
+    document.getElementById('login-screen').classList.add('hide');
+    document.getElementById('user-bar').style.display='flex';
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    const av = document.getElementById('user-avatar');
+    if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
+    else { av.style.display='none'; }
+    // carregar progresso do Firestore
+    await loadFromFirestore();
+    renderAll();
+  } else {
+    currentUser = null;
+    document.getElementById('login-screen').classList.remove('hide');
+    document.getElementById('user-bar').style.display='none';
+    estado = {};
+  }
+});
+
+// LOAD do Firestore
+async function loadFromFirestore(){
+  try {
+    const doc = await db.collection('albuns').doc(currentUser.uid).get();
+    if(doc.exists && doc.data().progresso){
+      estado = doc.data().progresso;
+    } else {
+      // tentar migrar do localStorage
+      try { const ls=localStorage.getItem('copa26v3'); if(ls){ estado=JSON.parse(ls); await saveToFirestore(); } } catch(e){}
+    }
+  } catch(e){ 
+    // fallback para localStorage
+    try { const ls=localStorage.getItem('copa26v3'); if(ls) estado=JSON.parse(ls); } catch(e2){}
+  }
+}
+
+// SAVE no Firestore (debounce 1.5s)
+function saveS(){
+  // salvar local imediato
+  try { localStorage.setItem('copa26v3', JSON.stringify(estado)); } catch(e){}
+  // salvar Firestore com debounce
+  if(!currentUser) return;
+  const dot = document.getElementById('sync-dot');
+  if(dot){ dot.classList.add('syncing'); dot.title='Salvando...'; }
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(saveToFirestore, 1500);
+}
+
+async function saveToFirestore(){
+  if(!currentUser) return;
+  const dot = document.getElementById('sync-dot');
+  try {
+    await db.collection('albuns').doc(currentUser.uid).set({ progresso: estado, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    if(dot){ dot.classList.remove('syncing','error'); dot.title='Sincronizado ✅'; }
+  } catch(e){
+    if(dot){ dot.classList.remove('syncing'); dot.classList.add('error'); dot.title='Erro ao salvar ❌'; }
+  }
+}
+
+function loadS(){ /* auth state cuida do load */ }
 function getS(k){ return estado[k]||'falta'; }
 function ciclar(k){ const o=['falta','tenho']; estado[k]=o[(o.indexOf(getS(k))+1)%2]; saveS(); renderAll(); }
 function ciclarRep(k){ const o=['falta','repetida']; estado[k]=o[(o.indexOf(getS(k))+1)%2]; saveS(); renderAll(); }
@@ -1297,7 +1431,8 @@ window.addEventListener('load', () => {
   }, 2400);
 });
 
-loadS(); renderAll();
+// init — auth state vai chamar renderAll após login
+loadS();
 </script>
 </body>
 </html>
