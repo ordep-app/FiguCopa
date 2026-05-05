@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FiguCopa 2026 ⚽</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --bg: #08111f;
@@ -366,27 +363,6 @@ body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--te
 <div class="header">
   <h1>⚽ MEU ÁLBUM COPA 2026</h1>
 
-</div>
-
-<!-- LOGIN SCREEN -->
-<div class="login-screen" id="login-screen">
-  <div class="login-title">⚽ FIGUCOPA 2026</div>
-  <div class="login-sub">SEU ÁLBUM DIGITAL DA COPA</div>
-  <button class="login-btn" id="login-btn" onclick="loginGoogle()">
-    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-    Entrar com Google
-  </button>
-  <div class="login-spinner" id="login-spinner"></div>
-  <div class="login-footer">Seu progresso fica salvo e acessível em qualquer dispositivo 🌐</div>
-</div>
-
-<!-- USER BAR -->
-<div class="user-bar" id="user-bar" style="display:none">
-  <div class="user-info">
-    <img class="user-avatar" id="user-avatar" src="" alt="">
-    <span class="user-name" id="user-name"></span>
-  </div>
-  <button class="user-logout" onclick="logout()">Sair</button>
 </div>
 
 <div class="stats-bar">
@@ -1377,73 +1353,6 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveS();
 // Salva a cada 30 segundos automaticamente
 setInterval(saveS, 30000);
 
-// ── FIREBASE AUTH ──
-try {
-  const firebaseConfig = {
-    apiKey: "AIzaSyBH7gM6LhnDtkTkqeKR2Lr_fLIOcN76qDM",
-    authDomain: "figucopa-2428e.firebaseapp.com",
-    projectId: "figucopa-2428e",
-    messagingSenderId: "714651613044",
-    appId: "1:714651613044:web:2eb71875164a03b8ffde21"
-  };
-
-  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  function loginGoogle(){
-    const btn = document.getElementById('login-btn');
-    const spinner = document.getElementById('login-spinner');
-    if(btn) btn.style.display='none';
-    if(spinner) spinner.classList.add('show');
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithRedirect(provider).catch(err=>{
-      if(btn) btn.style.display='flex';
-      if(spinner) spinner.classList.remove('show');
-      alert('Erro ao entrar: ' + err.message);
-    });
-  }
-
-  function logout(){
-    if(!confirm('Sair da conta?')) return;
-    auth.signOut().then(()=>{
-      estado = {};
-      renderAll();
-    });
-  }
-
-  // Captura resultado do redirect
-  auth.getRedirectResult().catch(()=>{});
-
-  // Monitora estado do login
-  auth.onAuthStateChanged(user=>{
-    if(user){
-      document.getElementById('login-screen').classList.add('hide');
-      document.getElementById('user-bar').style.display='flex';
-      document.getElementById('user-name').textContent = user.displayName || user.email;
-      const av = document.getElementById('user-avatar');
-      if(user.photoURL){ av.src=user.photoURL; av.style.display='block'; }
-      else { av.style.display='none'; }
-      loadS();
-      renderAll();
-    } else {
-      const ls = document.getElementById('login-screen');
-      if(ls){ ls.classList.remove('hide'); ls.style.opacity='1'; ls.style.pointerEvents='all'; }
-      document.getElementById('user-bar').style.display='none';
-      const btn = document.getElementById('login-btn');
-      const spinner = document.getElementById('login-spinner');
-      if(btn) btn.style.display='flex';
-      if(spinner) spinner.classList.remove('show');
-    }
-  });
-
-} catch(e) {
-  // Se Firebase falhar, mostra o app direto sem login
-  console.error('Firebase error:', e);
-  document.getElementById('login-screen').classList.add('hide');
-  loadS();
-  renderAll();
-}
-
 // SPLASH DISMISS
 window.addEventListener('load', () => {
   setTimeout(() => {
@@ -1453,6 +1362,7 @@ window.addEventListener('load', () => {
 
 // INIT
 loadS();
+renderAll();
 </script>
 </body>
 </html>
