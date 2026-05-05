@@ -29,26 +29,6 @@
 html { scroll-behavior: smooth; }
 body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── LOGIN ── */
-.login-screen { position:fixed; inset:0; z-index:9998; background:linear-gradient(160deg,#050d1a,#08111f); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transition:opacity .4s; }
-.login-screen.hide { opacity:0; pointer-events:none; }
-.login-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2rem,8vw,2.8rem); letter-spacing:4px; color:var(--gold); text-align:center; margin-bottom:6px; }
-.login-sub { font-size:0.83rem; color:var(--muted); text-align:center; margin-bottom:32px; letter-spacing:1px; }
-.login-btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; max-width:300px; padding:14px 20px; border-radius:50px; border:none; background:#fff; color:#1a1a1a; font-family:'Barlow',sans-serif; font-size:0.95rem; font-weight:800; cursor:pointer; box-shadow:0 4px 24px rgba(0,0,0,0.4); transition:transform .15s; }
-.login-btn:hover { transform:translateY(-2px); }
-.login-btn img { width:22px; height:22px; }
-.login-spinner { width:36px;height:36px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--gold);border-radius:50%;animation:spin 0.85s linear infinite;margin-top:20px;display:none; }
-.login-spinner.show { display:block; }
-.login-footer { margin-top:20px; font-size:0.72rem; color:var(--muted); text-align:center; line-height:1.7; max-width:280px; }
-
-/* ── USER BAR ── */
-.user-bar { display:flex; align-items:center; justify-content:space-between; padding:6px 14px; background:var(--bg2); border-bottom:1px solid var(--border); }
-.user-info { display:flex; align-items:center; gap:8px; }
-.user-avatar { width:26px; height:26px; border-radius:50%; border:2px solid var(--gold); object-fit:cover; }
-.user-name { font-size:0.8rem; font-weight:700; color:var(--text); max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.user-logout { background:rgba(255,255,255,0.06); border:1px solid var(--border); color:var(--muted); border-radius:50px; padding:4px 12px; font-family:'Barlow',sans-serif; font-size:0.72rem; font-weight:700; cursor:pointer; transition:all .15s; }
-.user-logout:hover { background:rgba(229,57,53,0.15); border-color:#e53935; color:#e57373; }
-
 .header {
   background: linear-gradient(160deg, #0d2347 0%, #0a1a35 40%, #071428 100%);
   border-bottom: 2px solid var(--gold);
